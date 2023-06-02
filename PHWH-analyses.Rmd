@@ -50,7 +50,7 @@ library(tidyr)
 library(tidyverse)
 library(vegan)
 library(visNetwork)
-
+library(ggord)
 ```
 
 # Reading in data
@@ -60,14 +60,6 @@ phwh<-read.csv("PHWH_postgresexport.csv",header=T,na.strings=c("","NA"))
 
 
 ```
-
-Analyses needed by Claire:
-
-
-
-
-
-
 
 # creating summary files for downstream analysis
 
@@ -194,7 +186,7 @@ taxatype<-c(rep("salamander",19),rep("fish",20),rep("macro",21))
 
 ```
 
-# which sites are surveyed sufficiently?
+# select sites 
 
 ```{r, warning = FALSE, message= FALSE}
 
@@ -205,7 +197,7 @@ sitechecks_surveyhistory_res<-merge(sitechecks_surveyhistory_rename,reservations
 sitechecks_surveyhistory_ressum<-sitechecks_surveyhistory_res %>%
   group_by(reservation)
 
-greenlightsites<-read.csv("PHWH_greenlightsites.csv")
+greenlightsites<-read.csv("G:/NaturalResources/Byer/DataAnalysis/PHWH/PHWH_cycle3sites_011323_sites.csv")
 
 sitechecks_surveyhistory_res_suff<-sitechecks_surveyhistory_res[sitechecks_surveyhistory_res$stream_name %in% greenlightsites$stream_nam , ]
 
@@ -784,6 +776,12 @@ seventhcheck_all<-phwh_alltax_suff_env_detecthistory_seventhcheck %>%
   pivot_wider(names_from=rowname) %>%
   column_to_rownames(var = "name")
 
+seventhcheck_all_2<-phwh_alltax_suff_env_detecthistory_seventhcheck %>%
+  dplyr::select(stream_name,streambiotic_suff_mtdusky:uenoidae) %>%
+  pivot_longer(-stream_name) %>%
+  pivot_wider(names_from=stream_name) %>%
+  column_to_rownames(var = "name")
+
 phwh_alltax_suff_env_detecthistory_eighthcheck<- phwh_alltax_suff_env_detecthistory %>% group_by(stream_name) %>% 
   arrange(datecount) %>% 
   summarise_all(funs(list(.[8]))) %>% 
@@ -890,7 +888,1050 @@ rownames(phwhall_occobject$y)<-rownames(firstcheck_all)
 
 ```
 
+## single year of surveying?
 
+```{r,warning=FALSE,message=FALSE}
+
+phwh_alltax_suff_env_detecthistory<-cbind(phwh_subset_suff_env_detecthistory,streambiotic_suff_biotic_bin)
+
+phwh_alltax_suff_env_detecthistory$date<- as.Date(phwh_alltax_suff_env_detecthistory$date , format = "%Y/%m/%d")
+
+phwh_alltax_suff_env_detecthistory$datecount<-as.numeric(phwh_alltax_suff_env_detecthistory$date-min(phwh_alltax_suff_env_detecthistory$date)+1)
+
+phwh_alltax_suff_env_detecthistory$dayofyear<-format(phwh_alltax_suff_env_detecthistory$date, "%j")
+
+
+phwh_alltax_suff_env_detecthistory_years<-phwh_alltax_suff_env_detecthistory
+
+phwh_alltax_suff_env_detecthistory_years$year<-year(phwh_alltax_suff_env_detecthistory$date)
+
+phwh_alltax_suff_env_detecthistory_years_2 <- phwh_alltax_suff_env_detecthistory_years %>%
+  group_by(stream_name,year,dayofyear)
+
+summary(factor(phwh_alltax_suff_env_detecthistory_years$year))
+
+phwh_alltax_suff_env_detecthistory_years_2008<-phwh_alltax_suff_env_detecthistory_years[phwh_alltax_suff_env_detecthistory_years$year %in% 2008,] %>%
+  dplyr::select(-year)
+
+
+phwh_alltax_suff_env_detecthistory_years_2008_firstcheck<- phwh_alltax_suff_env_detecthistory_years_2008 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[1]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude, date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+firstcheck_all_2008<-phwh_alltax_suff_env_detecthistory_years_2008_firstcheck %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+phwh_alltax_suff_env_detecthistory_secondcheck_2008<- phwh_alltax_suff_env_detecthistory_years_2008 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[2]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+secondcheck_all_2008<-phwh_alltax_suff_env_detecthistory_secondcheck_2008 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+
+phwh_alltax_suff_env_detecthistory_thirdcheck_2008<- phwh_alltax_suff_env_detecthistory_years_2008 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[3]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+thirdcheck_all_2008<-phwh_alltax_suff_env_detecthistory_thirdcheck_2008 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+#stop at third survey - nothing further
+
+
+sitechecks_2008<-phwh_alltax_suff_env_detecthistory_years_2008[,c(1,6)]
+
+sitechecks_2008$date<- as.Date(sitechecks_2008$date , format = "%Y/%m/%d")
+
+sitechecks_2008$dayofyear<-format(sitechecks_2008$date, "%j")
+
+sitechecks_2008$datecount<-as.numeric(sitechecks_2008$date-min(sitechecks_2008$date)+1)
+
+
+sitechecks_2008_surveyhistory<-sitechecks_2008 %>%
+  group_by(stream_name) %>% 
+  mutate(check=as.character(dense_rank(date))) %>%
+  arrange(stream_name) %>% 
+  distinct(stream_name, datecount, .keep_all = TRUE) %>%
+  spread(check,datecount) %>%
+  summarise(`1` = mean(`1`,na.rm=T),
+            `2`=mean(`2`,na.rm=T),
+            `3`=mean(`3`,na.rm=T),
+            )
+
+phwhall_occobject_2008<-list()
+
+phwhall_occobject_2008$y<-array(dim=c(108,36,3))
+
+phwhall_occobject_2008$y <- array(c(as.matrix(firstcheck_all_2008),as.matrix(secondcheck_all_2008),
+                               as.matrix(thirdcheck_all_2008)), dim=c(108,36,3))
+
+phwhall_occobject_2008$det.covs$day<-as.matrix(sitechecks_2008_surveyhistory[,2:4])
+
+dayyear_2008<-cbind(as.numeric(phwh_alltax_suff_env_detecthistory_years_2008_firstcheck$dayofyear),as.numeric(phwh_alltax_suff_env_detecthistory_secondcheck_2008$dayofyear),
+               as.numeric(phwh_alltax_suff_env_detecthistory_thirdcheck_2008$dayofyear))
+
+phwhall_occobject_2008$det.covs$dayyear<-as.matrix(dayyear_2008)
+
+phwh_subset_suff_env_detecthistory_2008<-phwh_alltax_suff_env_detecthistory_years_2008 %>% 
+  dplyr::select(stream_name,reservation,latitude,longitude,river_basin,date,substrate_metric_total,percent_best_types,per_boulder_slabs,per_boulder_256mm,
+         per_bedrock,per_cobble,per_gravel,per_sand,per_silt,per_leaf_woody,per_detritus,per_clay_hardpan,per_muck,per_artificial,pool_metric_total,
+         pool_depth_.cm.,bankfull_metric_total,average_bankfull_.m.,sinuosity,X._canopy_open,temp,
+         dissolved_oxygen_mgl,ph,conductivity,hmfei_narrative) %>%
+  group_by(stream_name, reservation,date)
+
+occcov_2008<-phwh_subset_suff_env_detecthistory_2008 %>% group_by(stream_name) %>% 
+  summarise_if(is.numeric, mean, na.rm = TRUE)
+
+occcov_2008_2<-occcov_2008[,c(-1,-4)]
+
+cols<-seq(1,25,1)
+
+occcov_2008_2[,cols] = apply(occcov_2008_2[,cols], 2, function(x) as.numeric(as.character(x)))
+
+occcov_2008_3<-occcov_2008_2[ , colSums(is.na(occcov_2008_2)) == 0]
+
+phwhall_occobject_2008$occ.covs<-as.matrix(occcov_2008_3)
+
+library(rgdal)
+d <- data.frame(lon=occcov_2008_3$longitude, lat=occcov_2008_3$latitude)
+coordinates(d) <- c("lon", "lat")
+proj4string(d) <- CRS("+init=epsg:4326") # WGS 84
+CRS.new <- CRS("+init=epsg:3734")
+d.3734 <- spTransform(d, CRS.new)
+plot(d)
+projcoords<-data.frame(d.3734)
+
+phwhall_occobject_2008$coords<-as.matrix(projcoords)
+
+rownames(phwhall_occobject_2008$y)<-rownames(firstcheck_all_2008)
+
+
+
+phwh_alltax_suff_env_detecthistory_years_2009<-phwh_alltax_suff_env_detecthistory_years[phwh_alltax_suff_env_detecthistory_years$year %in% 2009,]
+
+phwh_alltax_suff_env_detecthistory_years_2014<-phwh_alltax_suff_env_detecthistory_years[phwh_alltax_suff_env_detecthistory_years$year %in% 2014,]
+
+phwh_alltax_suff_env_detecthistory_years_2015<-phwh_alltax_suff_env_detecthistory_years[phwh_alltax_suff_env_detecthistory_years$year %in% 2015,]
+
+phwh_alltax_suff_env_detecthistory_years_2018<-phwh_alltax_suff_env_detecthistory_years[phwh_alltax_suff_env_detecthistory_years$year %in% 2018,]
+
+occcov_4<-occcov_3
+occcov_4$stream_name<-occcov$stream_name
+
+write.csv(occcov_4,"PHWH_occcovs_mean.csv")
+```
+
+#First cycle surveys - 2007-2010
+
+```{r,warning=FALSE,message=FALSE}
+
+phwh_alltax_suff_env_detecthistory_years_0710<-phwh_alltax_suff_env_detecthistory_years[phwh_alltax_suff_env_detecthistory_years$year %in% c(2007,2008,2009,2010),] %>%
+  dplyr::select(-year)
+
+
+phwh_alltax_suff_env_detecthistory_years_0710_firstcheck<- phwh_alltax_suff_env_detecthistory_years_0710 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[1]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude, date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+firstcheck_all_0710<-phwh_alltax_suff_env_detecthistory_years_0710_firstcheck %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+phwh_alltax_suff_env_detecthistory_secondcheck_0710<- phwh_alltax_suff_env_detecthistory_years_0710 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[2]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+secondcheck_all_0710<-phwh_alltax_suff_env_detecthistory_secondcheck_0710 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+
+phwh_alltax_suff_env_detecthistory_thirdcheck_0710<- phwh_alltax_suff_env_detecthistory_years_0710 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[3]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+thirdcheck_all_0710<-phwh_alltax_suff_env_detecthistory_thirdcheck_0710 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+phwh_alltax_suff_env_detecthistory_fourthcheck_0710<- phwh_alltax_suff_env_detecthistory_years_0710 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[4]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+fourthcheck_all_0710<-phwh_alltax_suff_env_detecthistory_fourthcheck_0710 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+
+phwh_alltax_suff_env_detecthistory_fifthcheck_0710<- phwh_alltax_suff_env_detecthistory_years_0710 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[5]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+fifthcheck_all_0710<-phwh_alltax_suff_env_detecthistory_fifthcheck_0710 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+#stop at third survey - nothing further
+
+
+sitechecks_0710<-phwh_alltax_suff_env_detecthistory_years_0710[,c(1,6)]
+
+sitechecks_0710$date<- as.Date(sitechecks_0710$date , format = "%Y/%m/%d")
+
+sitechecks_0710$dayofyear<-format(sitechecks_0710$date, "%j")
+
+sitechecks_0710$datecount<-as.numeric(sitechecks_0710$date-min(sitechecks_0710$date)+1)
+
+
+sitechecks_0710_surveyhistory<-sitechecks_0710 %>%
+  group_by(stream_name) %>% 
+  mutate(check=as.character(dense_rank(date))) %>%
+  arrange(stream_name) %>% 
+  distinct(stream_name, datecount, .keep_all = TRUE) %>%
+  spread(check,datecount) %>%
+  summarise(`1` = mean(`1`,na.rm=T),
+            `2`=mean(`2`,na.rm=T),
+            `3`=mean(`3`,na.rm=T),
+            )
+
+phwhall_occobject_0710<-list()
+
+phwhall_occobject_0710$y<-array(dim=c(108,141,3))
+
+phwhall_occobject_0710$y <- array(c(as.matrix(firstcheck_all_0710),as.matrix(secondcheck_all_0710),
+                               as.matrix(thirdcheck_all_0710)), dim=c(108,141,3))
+
+phwhall_occobject_0710$det.covs$day<-as.matrix(sitechecks_0710_surveyhistory[,2:4])
+
+dayyear_0710<-cbind(as.numeric(phwh_alltax_suff_env_detecthistory_years_0710_firstcheck$dayofyear),as.numeric(phwh_alltax_suff_env_detecthistory_secondcheck_0710$dayofyear),
+               as.numeric(phwh_alltax_suff_env_detecthistory_thirdcheck_0710$dayofyear))
+
+phwhall_occobject_0710$det.covs$dayyear<-as.matrix(dayyear_0710)
+
+phwh_subset_suff_env_detecthistory_0710<-phwh_alltax_suff_env_detecthistory_years_0710 %>% 
+  dplyr::select(stream_name,reservation,latitude,longitude,river_basin,date,substrate_metric_total,percent_best_types,per_boulder_slabs,per_boulder_256mm,
+         per_bedrock,per_cobble,per_gravel,per_sand,per_silt,per_leaf_woody,per_detritus,per_clay_hardpan,per_muck,per_artificial,pool_metric_total,
+         pool_depth_.cm.,bankfull_metric_total,average_bankfull_.m.,sinuosity,X._canopy_open,temp,
+         dissolved_oxygen_mgl,ph,conductivity,hmfei_narrative) %>%
+  group_by(stream_name, reservation,date)
+
+occcov_0710<-phwh_subset_suff_env_detecthistory_0710 %>% group_by(stream_name) %>% 
+  summarise_if(is.numeric, mean, na.rm = TRUE)
+
+occcov_0710_2<-occcov_0710[,c(-1,-4)]
+
+cols<-seq(1,25,1)
+
+occcov_0710_2[,cols] = apply(occcov_0710_2[,cols], 2, function(x) as.numeric(as.character(x)))
+
+occcov_0710_3<-occcov_0710_2[ , colSums(is.na(occcov_0710_2)) == 0]
+
+phwhall_occobject_0710$occ.covs<-as.matrix(occcov_0710_3)
+
+library(rgdal)
+d <- data.frame(lon=occcov_0710_3$longitude, lat=occcov_0710_3$latitude)
+coordinates(d) <- c("lon", "lat")
+proj4string(d) <- CRS("+init=epsg:4326") # WGS 84
+CRS.new <- CRS("+init=epsg:3734")
+d.3734 <- spTransform(d, CRS.new)
+plot(d)
+projcoords<-data.frame(d.3734)
+
+phwhall_occobject_0710$coords<-as.matrix(projcoords)
+
+rownames(phwhall_occobject_0710$y)<-rownames(firstcheck_all_0710)
+
+```
+
+#First cycle surveys - 2013-2016
+
+```{r,warning=FALSE,message=FALSE}
+
+phwh_alltax_suff_env_detecthistory_years_1316<-phwh_alltax_suff_env_detecthistory_years[phwh_alltax_suff_env_detecthistory_years$year %in% c(2013,2014,2015,2016),] %>%
+  dplyr::select(-year)
+
+
+phwh_alltax_suff_env_detecthistory_years_1316_firstcheck<- phwh_alltax_suff_env_detecthistory_years_1316 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[1]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude, date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+firstcheck_all_1316<-phwh_alltax_suff_env_detecthistory_years_1316_firstcheck %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+phwh_alltax_suff_env_detecthistory_secondcheck_1316<- phwh_alltax_suff_env_detecthistory_years_1316 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[2]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+secondcheck_all_1316<-phwh_alltax_suff_env_detecthistory_secondcheck_1316 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+
+phwh_alltax_suff_env_detecthistory_thirdcheck_1316<- phwh_alltax_suff_env_detecthistory_years_1316 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[3]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+thirdcheck_all_1316<-phwh_alltax_suff_env_detecthistory_thirdcheck_1316 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+phwh_alltax_suff_env_detecthistory_fourthcheck_1316<- phwh_alltax_suff_env_detecthistory_years_1316 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[4]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+fourthcheck_all_1316<-phwh_alltax_suff_env_detecthistory_fourthcheck_1316 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+
+phwh_alltax_suff_env_detecthistory_fifthcheck_1316<- phwh_alltax_suff_env_detecthistory_years_1316 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[5]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+fifthcheck_all_1316<-phwh_alltax_suff_env_detecthistory_fifthcheck_1316 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+#stop at third survey - not much further
+
+
+sitechecks_1316<-phwh_alltax_suff_env_detecthistory_years_1316[,c(1,6)]
+
+sitechecks_1316$date<- as.Date(sitechecks_1316$date , format = "%Y/%m/%d")
+
+sitechecks_1316$dayofyear<-format(sitechecks_1316$date, "%j")
+
+sitechecks_1316$datecount<-as.numeric(sitechecks_1316$date-min(sitechecks_1316$date)+1)
+
+
+sitechecks_1316_surveyhistory<-sitechecks_1316 %>%
+  group_by(stream_name) %>% 
+  mutate(check=as.character(dense_rank(date))) %>%
+  arrange(stream_name) %>% 
+  distinct(stream_name, datecount, .keep_all = TRUE) %>%
+  spread(check,datecount) %>%
+  summarise(`1` = mean(`1`,na.rm=T),
+            `2`=mean(`2`,na.rm=T),
+            `3`=mean(`3`,na.rm=T),
+            )
+
+phwhall_occobject_1316<-list()
+
+phwhall_occobject_1316$y<-array(dim=c(108,154,3))
+
+phwhall_occobject_1316$y <- array(c(as.matrix(firstcheck_all_1316),as.matrix(secondcheck_all_1316),
+                               as.matrix(thirdcheck_all_1316)), dim=c(108,154,3))
+
+phwhall_occobject_1316$det.covs$day<-as.matrix(sitechecks_1316_surveyhistory[,2:4])
+
+dayyear_1316<-cbind(as.numeric(phwh_alltax_suff_env_detecthistory_years_1316_firstcheck$dayofyear),as.numeric(phwh_alltax_suff_env_detecthistory_secondcheck_1316$dayofyear),
+               as.numeric(phwh_alltax_suff_env_detecthistory_thirdcheck_1316$dayofyear))
+
+phwhall_occobject_1316$det.covs$dayyear<-as.matrix(dayyear_1316)
+
+phwh_subset_suff_env_detecthistory_1316<-phwh_alltax_suff_env_detecthistory_years_1316 %>% 
+  dplyr::select(stream_name,reservation,latitude,longitude,river_basin,date,substrate_metric_total,percent_best_types,per_boulder_slabs,per_boulder_256mm,
+         per_bedrock,per_cobble,per_gravel,per_sand,per_silt,per_leaf_woody,per_detritus,per_clay_hardpan,per_muck,per_artificial,pool_metric_total,
+         pool_depth_.cm.,bankfull_metric_total,average_bankfull_.m.,sinuosity,X._canopy_open,temp,
+         dissolved_oxygen_mgl,ph,conductivity,hmfei_narrative) %>%
+  group_by(stream_name, reservation,date)
+
+occcov_1316<-phwh_subset_suff_env_detecthistory_1316 %>% group_by(stream_name) %>% 
+  summarise_if(is.numeric, mean, na.rm = TRUE)
+
+occcov_1316_2<-occcov_1316[,c(-1,-4)]
+
+cols<-seq(1,25,1)
+
+occcov_1316_2[,cols] = apply(occcov_1316_2[,cols], 2, function(x) as.numeric(as.character(x)))
+
+occcov_1316_3<-occcov_1316_2[ , colSums(is.na(occcov_1316_2)) == 0]
+
+phwhall_occobject_1316$occ.covs<-as.matrix(occcov_1316_3)
+
+library(rgdal)
+d <- data.frame(lon=occcov_1316_3$longitude, lat=occcov_1316_3$latitude)
+coordinates(d) <- c("lon", "lat")
+proj4string(d) <- CRS("+init=epsg:4326") # WGS 84
+CRS.new <- CRS("+init=epsg:3734")
+d.3734 <- spTransform(d, CRS.new)
+plot(d)
+projcoords<-data.frame(d.3734)
+
+phwhall_occobject_1316$coords<-as.matrix(projcoords)
+
+rownames(phwhall_occobject_1316$y)<-rownames(firstcheck_all_1316)
+
+```
+
+#First cycle surveys - 2017-2021
+
+```{r,warning=FALSE,message=FALSE}
+
+phwh_alltax_suff_env_detecthistory_years_1821<-phwh_alltax_suff_env_detecthistory_years[phwh_alltax_suff_env_detecthistory_years$year %in% c(2018,2019,2020,2021),] %>%
+  dplyr::select(-year)
+
+
+phwh_alltax_suff_env_detecthistory_years_1821_firstcheck<- phwh_alltax_suff_env_detecthistory_years_1821 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[1]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude, date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+firstcheck_all_1821<-phwh_alltax_suff_env_detecthistory_years_1821_firstcheck %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+phwh_alltax_suff_env_detecthistory_secondcheck_1821<- phwh_alltax_suff_env_detecthistory_years_1821 %>% group_by(stream_name) %>% 
+  arrange(datecount) %>% 
+  summarise_all(funs(list(.[2]))) %>% 
+  unnest(cols = c(reservation, river_basin, latitude,longitude,date, substrate_metric_total, percent_best_types, 
+                  per_boulder_slabs, per_boulder_256mm, per_bedrock, per_cobble, 
+                  per_gravel, per_sand, per_silt, per_leaf_woody, per_detritus, 
+                  per_clay_hardpan, per_muck, per_artificial, pool_metric_total, 
+                  pool_depth_.cm., bankfull_metric_total, average_bankfull_.m., 
+                  sinuosity, X._canopy_open, temp, dissolved_oxygen_mgl, ph, 
+                  conductivity, hmfei_narrative, streambiotic_suff_mtdusky, 
+                  streambiotic_suff_nodusky, streambiotic_suff_twolined, streambiotic_suff_longtail, 
+                  streambiotic_suff_red, streambiotic_suff_mole, streambiotic_suff_fourtoed, 
+                  streambiotic_suff_redback, streambiotic_suff_slimy, blacknose_dace, 
+                  bluegill_sunfish, bluntnose_minnow, brindled_madtom, brook_stickleback, 
+                  brook_trout, central_mudminnow, central_stoneroller_minnow, 
+                  common_shiner, creek_chub, eastern_sand_darter, fantail_darter, 
+                  fathead_minnow, golden_shiner, goldfish, grass_pickerel, 
+                  greenside_darter, green_sunfish, johnny_darter, largemouth_bass, 
+                  longear_sunfish, longnose_dace, mottled_sculpin, northern_hog_sucker, 
+                  pumpkinseed_sunfish, rainbow_darter, rainbow_trout, redbelly_dace, 
+                  redside_dace, river_chub, silverjaw_minnow, smallmouth_bass, 
+                  spotfin_shiner, stonecat_madtom, striped_shiner, trout_perch, 
+                  warmouth_sunfish, white_sucker, yellow_bullhead_catfish, 
+                  sessile_animals, aquatic_worms, sow_bugs, scuds, water_mites, 
+                  damselfly_nymphs, alderfly_larvae, other_beetles, crayfish, 
+                  dragonfly_nymphs, riffle_beetles, other_flies, midges, snails, 
+                  clams, fishfly_larvae, water_penny_beetles, cranefly_larvae, 
+                  ameletidae, arthropleidae, baetidae, baetiscidae, caenidae, 
+                  ephemerellidae, ephemeridae, heptageniidae, isonychiidae, 
+                  leptohyphidae, leptophlebiidae, polymitarcyidae, potamanthidae, 
+                  pseudironidae, siphlonuridae, capniidae, chloroperlidae, 
+                  leuctridae, nemouridae, peltoperlidae, perlidae, perlodidae, 
+                  pteronarcyidae, taeniopterygidae, brachycentridae, dipseuodopsidae, 
+                  glossosomatidae, goeridae, helicopsychidae, hydropsychidae, 
+                  hydroptilidae, lepidostomatidae, leptoceridae, limnephilidae, 
+                  molannidae, odontoceridae, philopotamidae, phryganeidae, 
+                  polycentropodidae, psychomiidae, rhyacophilidae, uenoidae, 
+                  datecount, dayofyear))
+
+secondcheck_all_1821<-phwh_alltax_suff_env_detecthistory_secondcheck_1821 %>%
+  dplyr::select(streambiotic_suff_mtdusky:uenoidae) %>%
+  rownames_to_column() %>%
+  pivot_longer(-rowname) %>%
+  pivot_wider(names_from=rowname) %>%
+  column_to_rownames(var = "name")
+
+
+
+#stop at second survey - not much further
+
+sitechecks_1821<-phwh_alltax_suff_env_detecthistory_years_1821[,c(1,6)]
+
+sitechecks_1821$date<- as.Date(sitechecks_1821$date , format = "%Y/%m/%d")
+
+sitechecks_1821$dayofyear<-format(sitechecks_1821$date, "%j")
+
+sitechecks_1821$datecount<-as.numeric(sitechecks_1821$date-min(sitechecks_1821$date)+1)
+
+
+sitechecks_1821_surveyhistory<-sitechecks_1821 %>%
+  group_by(stream_name) %>% 
+  mutate(check=as.character(dense_rank(date))) %>%
+  arrange(stream_name) %>% 
+  distinct(stream_name, datecount, .keep_all = TRUE) %>%
+  spread(check,datecount) %>%
+  summarise(`1` = mean(`1`,na.rm=T),
+            `2`=mean(`2`,na.rm=T)
+            )
+
+phwhall_occobject_1821<-list()
+
+phwhall_occobject_1821$y<-array(dim=c(108,171,2))
+
+phwhall_occobject_1821$y <- array(c(as.matrix(firstcheck_all_1821),as.matrix(secondcheck_all_1821)), dim=c(108,171,2))
+
+phwhall_occobject_1821$det.covs$day<-as.matrix(sitechecks_1821_surveyhistory[,2:3])
+
+dayyear_1821<-cbind(as.numeric(phwh_alltax_suff_env_detecthistory_years_1821_firstcheck$dayofyear),as.numeric(phwh_alltax_suff_env_detecthistory_secondcheck_1821$dayofyear))
+
+phwhall_occobject_1821$det.covs$dayyear<-as.matrix(dayyear_1821)
+
+phwh_subset_suff_env_detecthistory_1821<-phwh_alltax_suff_env_detecthistory_years_1821 %>% 
+  dplyr::select(stream_name,reservation,latitude,longitude,river_basin,date,substrate_metric_total,percent_best_types,per_boulder_slabs,per_boulder_256mm,
+         per_bedrock,per_cobble,per_gravel,per_sand,per_silt,per_leaf_woody,per_detritus,per_clay_hardpan,per_muck,per_artificial,pool_metric_total,
+         pool_depth_.cm.,bankfull_metric_total,average_bankfull_.m.,sinuosity,X._canopy_open,temp,
+         dissolved_oxygen_mgl,ph,conductivity,hmfei_narrative) %>%
+  group_by(stream_name, reservation,date)
+
+occcov_1821<-phwh_subset_suff_env_detecthistory_1821 %>% group_by(stream_name) %>% 
+  summarise_if(is.numeric, mean, na.rm = TRUE)
+
+occcov_1821_2<-occcov_1821[,c(-1,-4)]
+
+cols<-seq(1,25,1)
+
+occcov_1821_2[,cols] = apply(occcov_1821_2[,cols], 2, function(x) as.numeric(as.character(x)))
+
+occcov_1821_3<-occcov_1821_2[ , colSums(is.na(occcov_1821_2)) == 0]
+
+phwhall_occobject_1821$occ.covs<-as.matrix(occcov_1821_3)
+
+library(rgdal)
+d <- data.frame(lon=occcov_1821_3$longitude, lat=occcov_1821_3$latitude)
+coordinates(d) <- c("lon", "lat")
+proj4string(d) <- CRS("+init=epsg:4326") # WGS 84
+CRS.new <- CRS("+init=epsg:3734")
+d.3734 <- spTransform(d, CRS.new)
+plot(d)
+projcoords<-data.frame(d.3734)
+
+phwhall_occobject_1821$coords<-as.matrix(projcoords)
+
+rownames(phwhall_occobject_1821$y)<-rownames(firstcheck_all_1821)
+
+```
 
 
 
@@ -1077,7 +2118,7 @@ streambioticsum_suff_biotic_bin<- streambioticsum_suff_biotic %>% mutate_if(is.n
 streambioticsum_suff_biotic_bin_t<-t(streambioticsum_suff_biotic_bin)
 ```
 
-```{r, warning = FALSE, message= FALSE}
+```{r, warning = FALSE, message= FALSE,}
 
 library(netassoc)
 
@@ -1155,14 +2196,16 @@ com
 com$memberships
 
 set.seed(2)
-plot(com, g.streams, edge.width=E(g.streams)$weight*5)
+plot(com, g.streams, edge.width=E(g.streams)$weight*0.5)
 
 library(RColorBrewer)
 colors=brewer.pal(length(com),'Accent') #make a color palette
 V(g.streams)$color=colors[membership(com)] #assign each vertex a color based on the community assignment
 
 set.seed(2)
-plot(g.streams, edge.width=E(g.streams)$weight*5)
+plot(com,g.streams, edge.width=E(g.streams)$weight*0.1,edge.color="lightgrey",vertex.label.cex=0.8,vertex.size=7,rescale=TRUE)
+
+
 
 
 
@@ -1353,4 +2396,1070 @@ Will want to exclude species that did not fit as well.
 out.alltax.allsigcor.impdet.ms<-readRDS("alltaxmodel_phwh.rds")
 
 summary(out.alltax.allsigcor.impdet.ms,max.print=100000)
+```
+
+# Joint species distribution models
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+phwhall_occobject_2<-phwhall_occobject
+
+phwhall_occobject_2$y<-phwhall_occobject$y[(apply(phwhall_occobject$y, 1, mean, na.rm = TRUE) > 0),,]
+dim(phwhall_occobject_2$y)
+
+
+sppnames_2<-rownames(phwhall_occobject_2$y)
+
+sort(apply(phwhall_occobject_2$y, 1, mean, na.rm = TRUE))
+
+# louvain's cluster identified 3 clusters - one of (perhaps) more rocky stream communities, one with most fish that are indicators of # stream health, and another of more spring-associated communities. 
+
+#Place a common species first. The first species has all of its factor loadings set to fixed values, and so it can have a large #influence on the resulting interpretation on the factor loadings and latent factors. We have also found that having a very rare #species first can result in very slow mixing and increased sensitivity to initial values of the latent factor loadings matrix.
+#For the remaining q−1 factors, place species that you believe will show different occurrence patterns than the first species, and #the other species placed before it. Place these remaining q−1 species in order of decreasing differences from the initial factor.
+
+#For example, if I had q=3, for the second species in the array, I would place a species that I a priori think is most different from #the first species. For the third species in the array, I would place a species that I think will show different occurrence patterns #than both the first and second species, but its patterns may not be as noticeably different compared to the first and second species.
+
+
+# Reorder species. 
+sp.ordered <- c("streambiotic_suff_twolined","rainbow_darter","odontoceridae",sppnames_2[!(sppnames_2 %in% c("streambiotic_suff_twolined","rainbow_darter","odontoceridae"))])
+
+#
+# Create new detection-nondetection data matrix in the new order
+y.new <- phwhall_occobject_2$y[sp.ordered, , ]
+# Create a new data array
+phwhall.ordered <- phwhall_occobject_2
+# Change the data to the new ordered data
+phwhall.ordered$y <- y.new
+str(phwhall.ordered)
+# Number of species
+N <- nrow(phwhall.ordered$y)
+# Initiate all lambda initial values to 0. 
+n.factors<-3
+lambda.inits <- matrix(0, N, n.factors)
+# Set diagonal elements to 1
+diag(lambda.inits) <- 1
+# Set lower triangular elements to random values from a standard normal distribution
+lambda.inits[lower.tri(lambda.inits)] <- rnorm(sum(lower.tri(lambda.inits)))
+# Check it out. Note this is also how spOccupancy specifies default
+# initial values for lambda.
+lambda.inits
+
+inits <- list(alpha.comm = 0,
+              beta.comm = 0,
+              beta = 0,
+              alpha = 0,
+              tau.sq.beta = 1,
+              tau.sq.alpha = 1,
+              lambda = lambda.inits, 
+              z = apply(phwhall.ordered$y, c(1, 2), max, na.rm = TRUE))
+priors <- list(beta.comm.normal = list(mean = 0, var = 2.72),
+               alpha.comm.normal = list(mean = 0, var = 2.72),
+               tau.sq.beta.ig = list(a = 0.1, b = 0.1),
+               tau.sq.alpha.ig = list(a = 0.1, b = 0.1))
+n.samples <- 5000
+n.burn <- 1000
+n.thin <- 8
+n.chains <- 3
+phwhall_occobject_allsigcor.occ.formula <- ~scale(pool_depth_.cm.) + scale(per_sand) + scale(per_cobble) + scale(substrate_metric_total) +
+  scale(pool_metric_total)
+phwhall_occobject_dayyearseason.det.formula <- ~scale(seasons)+scale(dayyear)
+out.lfMsPGOcc <- lfMsPGOcc(occ.formula = phwhall_occobject_allsigcor.occ.formula, det.formula = phwhall_occobject_dayyearseason.det.formula, 
+                           data = phwhall.ordered, inits = inits, priors = priors, 
+                           n.factors = n.factors, n.samples = n.samples, 
+                           n.omp.threads = 1, verbose = TRUE, n.report = 1000, 
+                           n.burn = n.burn, n.thin = n.thin, n.chains = n.chains)
+summary(out.lfMsPGOcc)
+plot(out.lfMsPGOcc$beta.comm.samples, density = FALSE)
+summary(out.lfMsPGOcc$lambda.samples)
+
+ppc.out <- ppcOcc(out.lfMsPGOcc, fit.stat = 'freeman-tukey', group = 1)
+
+options(max.print=1000000)
+sink("out_lambdas.txt")
+print(summary(out.lfMsPGOcc$lambda.samples,quantiles=c(0.05,0.5,0.95)))
+sink() 
+
+
+write.csv(summary(out.lfMsPGOcc$lambda.samples),"out.csv")
+
+
+
+```
+
+
+
+# now spatial model
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+# Pair-wise distance between all sites
+dist.phwh <- dist(phwhall_occobject_2$coords)
+# Exponential correlation model
+cov.model <- "exponential"
+# Specify all other initial values identical to lfMsPGOcc() from before
+# Number of species
+N <- nrow(phwhall_occobject_2$y)
+# Initiate all lambda initial values to 0. 
+lambda.inits <- matrix(0, N, n.factors)
+# Set diagonal elements to 1
+diag(lambda.inits) <- 1
+# Set lower triangular elements to random values from a standard normal dist
+lambda.inits[lower.tri(lambda.inits)] <- rnorm(sum(lower.tri(lambda.inits)))
+# Check it out
+lambda.inits
+
+inits <- list(alpha.comm = 0,
+              beta.comm = 0,
+              beta = 0,
+              alpha = 0,
+              tau.sq.beta = 1,
+              tau.sq.alpha = 1,
+              lambda = lambda.inits, 
+              phi = 3 / mean(dist.phwh),
+              z = apply(phwhall.ordered$y, c(1, 2), max, na.rm = TRUE))
+batch.length <- 25
+n.batch <- 200
+n.burn <- 3000
+n.thin <- 2
+n.chains <- 3
+min.dist <- min(dist.phwh)
+max.dist <- max(dist.phwh)
+priors <- list(beta.comm.normal = list(mean = 0, var = 2.72),
+               alpha.comm.normal = list(mean = 0, var = 2.72),
+               tau.sq.beta.ig = list(a = 0.1, b = 0.1),
+               tau.sq.alpha.ig = list(a = 0.1, b = 0.1), 
+               phi.unif = list(3 / max.dist, 3 / min.dist))
+tuning <- list(phi = 1)
+n.omp.threads <- 1
+verbose <- TRUE
+n.report <- 50 # Report progress at every 50th batch.
+
+out.sfMsPGOcc <- sfMsPGOcc(occ.formula = phwhall_occobject_allsigcor.occ.formula, det.formula = phwhall_occobject_dayyearseason.det.formula, 
+                           data = phwhall.ordered, 
+                           inits = inits, 
+                           n.batch = n.batch, 
+                           batch.length = batch.length, 
+                           accept.rate = 0.43, 
+                           priors = priors, 
+                           n.factors = n.factors,
+                           cov.model = cov.model, 
+                           tuning = tuning, 
+                           n.omp.threads = n.omp.threads, 
+                           verbose = TRUE, 
+                           NNGP = TRUE, 
+                           n.neighbors = 5, 
+                           n.report = n.report, 
+                           n.burn = n.burn, 
+                           n.thin = n.thin, 
+                           n.chains = n.chains)
+summary(out.sfMsPGOcc)
+plot(out.sfMsPGOcc$beta.comm.samples, density = FALSE)
+summary(out.sfMsPGOcc$lambda.samples)
+
+ppc.out.sf <- ppcOcc(out.sfMsPGOcc, fit.stat = 'freeman-tukey', group = 1)
+waicOcc(out.sfMsPGOcc)
+waicOcc(out.lfMsPGOcc)
+
+
+lambda.inits.1 <- matrix(0, N, 1)
+# Set diagonal elements to 1
+diag(lambda.inits.1) <- 1
+# Set lower triangular elements to random values from a standard normal dist
+lambda.inits.1[lower.tri(lambda.inits.1)] <- rnorm(sum(lower.tri(lambda.inits.1)))
+# Check it out
+lambda.inits.1
+inits.1 <- list(alpha.comm = 0,
+              beta.comm = 0,
+              beta = 0,
+              alpha = 0,
+              tau.sq.beta = 1,
+              tau.sq.alpha = 1,
+              lambda = lambda.inits.1, 
+              phi = 3 / mean(dist.phwh),
+              z = apply(phwhall.ordered$y, c(1, 2), max, na.rm = TRUE))
+
+out.sfMsPGOcc.fac1 <- sfMsPGOcc(occ.formula = phwhall_occobject_allsigcor.occ.formula, det.formula = phwhall_occobject_dayyearseason.det.formula, 
+                           data = phwhall.ordered, 
+                           inits = inits.1, 
+                           n.batch = n.batch, 
+                           batch.length = batch.length, 
+                           accept.rate = 0.43, 
+                           priors = priors, 
+                           n.factors = 1,
+                           cov.model = cov.model, 
+                           tuning = tuning, 
+                           n.omp.threads = n.omp.threads, 
+                           verbose = TRUE, 
+                           NNGP = TRUE, 
+                           n.neighbors = 5, 
+                           n.report = n.report, 
+                           n.burn = n.burn, 
+                           n.thin = n.thin, 
+                           n.chains = n.chains)
+
+summary(out.sfMsPGOcc.fac1$lambda.samples)
+
+
+
+```
+
+This revised model (seems) to point towards sow bugs as *particularly* differentiated from good stream salamander habitat. Let's explore that further - using sow bugs as the second factor.
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+
+# Reorder species. 
+sp.ordered.2 <- c("streambiotic_suff_twolined","sow_bugs",sppnames_2[!(sppnames_2 %in% c("streambiotic_suff_twolined","sow_bugs"))])
+
+#
+# Create new detection-nondetection data matrix in the new order
+y.new.2 <- phwhall_occobject_2$y[sp.ordered.2, , ]
+# Create a new data array
+phwhall.ordered.2 <- phwhall_occobject_2
+# Change the data to the new ordered data
+phwhall.ordered.2$y <- y.new.2
+str(phwhall.ordered.2)
+# Number of species
+N <- nrow(phwhall.ordered.2$y)
+# Initiate all lambda initial values to 0. 
+n.factors<-2
+lambda.inits <- matrix(0, N, n.factors)
+# Set diagonal elements to 1
+diag(lambda.inits) <- 1
+# Set lower triangular elements to random values from a standard normal distribution
+lambda.inits[lower.tri(lambda.inits)] <- rnorm(sum(lower.tri(lambda.inits)))
+# Check it out. Note this is also how spOccupancy specifies default
+# initial values for lambda.
+lambda.inits
+
+n.samples <- 5000
+n.burn <- 1000
+n.thin <- 8
+n.chains <- 3
+phwhall_occobject_allsigcor.occ.formula <- ~scale(pool_depth_.cm.) + scale(per_sand) + scale(per_cobble) + scale(substrate_metric_total) +
+  scale(pool_metric_total)
+phwhall_occobject_dayyearseason.det.formula <- ~scale(seasons)+scale(dayyear)
+inits.2 <- list(alpha.comm = 0,
+              beta.comm = 0,
+              beta = 0,
+              alpha = 0,
+              tau.sq.beta = 1,
+              tau.sq.alpha = 1,
+              lambda = lambda.inits, 
+              phi = 3 / mean(dist.phwh),
+              z = apply(phwhall.ordered.2$y, c(1, 2), max, na.rm = TRUE))
+
+out.sfMsPGOcc.fac2 <- sfMsPGOcc(occ.formula = phwhall_occobject_allsigcor.occ.formula, det.formula = phwhall_occobject_dayyearseason.det.formula, 
+                           data = phwhall.ordered.2, 
+                           inits = inits.2, 
+                           n.batch = n.batch, 
+                           batch.length = batch.length, 
+                           accept.rate = 0.43, 
+                           priors = priors, 
+                           n.factors = n.factors,
+                           cov.model = cov.model, 
+                           tuning = tuning, 
+                           n.omp.threads = n.omp.threads, 
+                           verbose = TRUE, 
+                           NNGP = TRUE, 
+                           n.neighbors = 5, 
+                           n.report = n.report, 
+                           n.burn = n.burn, 
+                           n.thin = n.thin, 
+                           n.chains = n.chains)
+
+summary(out.sfMsPGOcc.fac2$lambda.samples)
+
+waicOcc(out.sfMsPGOcc.fac1)
+
+waicOcc(out.sfMsPGOcc.fac2)
+
+
+```
+
+Nope - q = 1 is still best. 
+
+out.sfMsPGOcc.fac1 should likely be the model to use for now.
+
+reasonable fit for this model already! let's try to predict out to all streams.
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+
+phwh_subset_2<-phwh_subset %>% dplyr::select(stream_name,date,latitude,longitude,pool_depth_.cm.,per_sand,per_cobble,substrate_metric_total,pool_metric_total) %>% distinct(stream_name, date, .keep_all = TRUE)
+  
+phwh_subset_3<-na.omit(phwh_subset_2)
+
+
+pool_depth_.cm. = ((phwh_subset_3$pool_depth_.cm. - mean(phwhall.ordered$occ.covs[,16]))/sd(phwhall.ordered$occ.covs[,16]))
+per_sand = ((phwh_subset_3$per_sand - mean(phwhall.ordered$occ.covs[,8]))/sd(phwhall.ordered$occ.covs[,8]))
+per_cobble = ((phwh_subset_3$per_cobble - mean(phwhall.ordered$occ.covs[, 6])) / sd(phwhall.ordered$occ.covs[, 6]))
+substrate_metric_total = ((phwh_subset_3$substrate_metric_total - mean(phwhall.ordered$occ.covs[, 1])) / sd(phwhall.ordered$occ.covs[, 1]))
+pool_metric_total = ((as.numeric(phwh_subset_3$pool_metric_total) - mean(phwhall.ordered$occ.covs[, 15])) / sd(phwhall.ordered$occ.covs[, 15]))
+
+predict_data<-data.frame(int = 1, pool_depth_.cm. = pool_depth_.cm., per_sand = per_sand, per_cobble = per_cobble, substrate_metric_total = substrate_metric_total, pool_metric_total = pool_metric_total)
+
+coords<-as.matrix(phwh_subset_3[,c("longitude","latitude")])
+
+fullphwhpred<-predict(out.sfMsPGOcc.fac1,as.matrix(predict_data),coords,type="occupancy")
+
+str(fullphwhpred)
+# Species richness samples
+rich.pred <- apply(fullphwhpred$z.0.samples, c(1, 3), sum)
+rich.real<-apply(na.omit(phwhall_occobject$y),c(2,3),function(x) sum(x,na.rm=T))
+latersurveys<-rich.real[,3:8]
+latersurveys[latersurveys==0]<-NA
+rich.real[,3:8]<-latersurveys
+plot.dat <- data.frame(stream_name=phwh_subset_3$stream_name,
+                       date=phwh_subset_3$date,
+                       x = phwh_subset_3$longitude, 
+                       y = phwh_subset_3$latitude, 
+                       rich.mean = apply(rich.pred, 2, mean), 
+                       rich.sd = apply(rich.pred, 2, sd))
+
+plot.dat.real <- data.frame(stream_name=colnames(seventhcheck_all_2),
+                       x = phwhall_occobject$coords[,1], 
+                       y = phwhall_occobject$coords[,2], 
+                       rich.mean = apply(rich.real, 1, function(x) mean(x,na.rm=T)), 
+                       rich.sd = apply(rich.real, 1, function(x) sd(x,na.rm=T)))
+# Plot species richness across PHWH
+
+RMSE <- function(observed, predicted) {
+  sqrt(mean((predicted - observed)^2, na.rm=TRUE))
+}
+f1 <- function(x, test, train) {
+  nmx <- x[1]
+  idp <- x[2]
+  if (nmx < 1) return(Inf)
+  if (idp < .001) return(Inf)
+  m <- gstat(formula=rich.mean~1, locations=train, nmax=nmx, set=list(idp=idp))
+  p <- predict(m, newdata=test, debug.level=0)$var1.pred
+  RMSE(test$rich.mean, p)
+}
+
+set.seed(12345)
+
+
+respoly<-readOGR("G:/NaturalResources/Byer/DataAnalysis/bbs_cmp_analyses/bbsapp/CMPboundaries.shp")
+
+respoly <- spTransform(respoly, CRS("+init=epsg:4326"))
+
+plot.dat$date<-as.Date(plot.dat$date , format = "%Y/%m/%d")
+
+plot.dat$year<-year(plot.dat$date)
+
+sort(unique(plot.dat$year))
+
+plot.dat_20032010<-plot.dat[plot.dat$year %in% c(2003,2004,2007,2008,20009,2010),]
+
+plot.dat_20172022<-plot.dat[plot.dat$year %in% c(2017,2018,2019,2020,2021,2022),]
+  
+  dsp <- SpatialPoints(plot.dat_20172022[,3:4])
+  dsp <- SpatialPointsDataFrame(dsp, plot.dat_20172022)
+  crs(dsp)<-CRS("+init=epsg:4326")
+  j <- sample(nrow(dsp), 0.2 * nrow(dsp))
+  tst <- dsp[j,]
+  trn <- dsp[-j,]
+  opt <- optim(c(8, .5), f1, test=tst, train=trn)
+  
+  # define groups for mapping
+  cuts <- c(14,21,28,35)
+  # set up a palette of interpolated colors
+  blues <- colorRampPalette(c('yellow', 'orange', 'blue', 'dark blue'))
+  spplot(dsp, 'rich.mean', cuts=cuts, col.regions=blues(5), pch=20, cex=2)
+  v <- voronoi(dsp)
+  
+  ch <- chull(plot.dat_20172022[,3:4])
+  coords <- plot.dat_20172022[c(ch, ch[1]), 3:4]  # closed polygon
+  
+  plot(plot.dat_20172022[,3:4], pch=19)
+  lines(coords, col="red")
+  
+ 
+  vca <- intersect(v, respoly)
+  spplot(vca, 'rich.mean', col.regions=rev(get_col_regions()))
+  r <- raster(respoly, res=0.0001)
+  crs(r)<-CRS("+init=epsg:4326")
+  crs(vca)<-CRS("+init=epsg:4326")
+  vr <- rasterize(vca, r, 'rich.mean')
+  crs(vr)<-CRS("+init=epsg:4326")
+  plot(vr)
+  points(dsp)
+  
+  writeRaster(vr,filename = paste0(getwd(),"richness_20172022.asc"),overwrite=TRUE)
+  
+  #actual richness
+  
+  dsp <- SpatialPoints(plot.dat.real[,2:3])
+  dsp <- SpatialPointsDataFrame(dsp, plot.dat.real)
+  crs(dsp)<-CRS("+init=epsg:3734")
+  j <- sample(nrow(dsp), 0.2 * nrow(dsp))
+  tst <- dsp[j,]
+  trn <- dsp[-j,]
+  opt <- optim(c(8, .5), f1, test=tst, train=trn)
+ 
+  respoly.3734<-spTransform(respoly,CRS("+init=epsg:3734"))
+  r <- raster(respoly.3734, res=300)
+  
+  fitmax <- gstat::gstat(formula = rich.mean ~ 1, data = dsp, nmax = opt$par[1], set = list(idp = opt$par[2]))
+  maxint <- raster::interpolate(r, model=fitmax)
+  crs(maxint)<-CRS("+init=epsg:3734")
+  plot(maxint, col=rev(heat.colors(255)))
+  r2 <- crop(maxint, extent(respoly.3734))
+  r3 <- mask(r2, respoly.3734)
+    plot(r3, col=rev(heat.colors(255)))
+
+  
+  writeRaster(r3,filename = paste0(getwd(),"richness_observed.asc"),overwrite=TRUE)
+
+```
+
+As a brief note - all of the above assumes closure (no immigration/emigration across surveys), which is likely violated. There are two suites of approaches that could be used at this juncture - Hmsc, assuming perfect detection, and Fidino et al. (2019)'s dcom. First, I will try just fitting the spatial factor occupancy model to 2008 data.
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+phwhall_occobject_2008_2<-phwhall_occobject_2008
+
+phwhall_occobject_2008_2$y<-phwhall_occobject_2008$y[(apply(phwhall_occobject_2008$y, 1, mean, na.rm = TRUE) > 0),,]
+dim(phwhall_occobject_2008_2$y)
+
+
+sppnames_2008_2<-rownames(phwhall_occobject_2008_2$y)
+
+sort(apply(phwhall_occobject_2008_2$y, 1, mean, na.rm = TRUE))
+
+# louvain's cluster identified 3 clusters - one of (perhaps) more rocky stream communities, one with most fish that are indicators of # stream health, and another of more spring-associated communities. 
+
+#Place a common species first. The first species has all of its factor loadings set to fixed values, and so it can have a large #influence on the resulting interpretation on the factor loadings and latent factors. We have also found that having a very rare #species first can result in very slow mixing and increased sensitivity to initial values of the latent factor loadings matrix.
+#For the remaining q−1 factors, place species that you believe will show different occurrence patterns than the first species, and #the other species placed before it. Place these remaining q−1 species in order of decreasing differences from the initial factor.
+
+#For example, if I had q=3, for the second species in the array, I would place a species that I a priori think is most different from #the first species. For the third species in the array, I would place a species that I think will show different occurrence patterns #than both the first and second species, but its patterns may not be as noticeably different compared to the first and second species.
+
+
+# Reorder species. 
+sp.2008.ordered <- c("midges","streambiotic_suff_mole","johnny_darter",sppnames_2008_2[!(sppnames_2008_2 %in% c("midges","streambiotic_suff_mole","johnny_darter"))])
+
+# Create new detection-nondetection data matrix in the new order
+y.2008.new <- phwhall_occobject_2008_2$y[sp.2008.ordered, , ]
+# Create a new data array
+phwhall.2008.ordered <- phwhall_occobject_2008_2
+# Change the data to the new ordered data
+phwhall.2008.ordered$y <- y.2008.new
+str(phwhall.2008.ordered)
+
+# Pair-wise distance between all sites
+dist.phwh <- dist(phwhall.2008.ordered$coords)
+# Exponential correlation model
+cov.model <- "exponential"
+# Specify all other initial values identical to lfMsPGOcc() from before
+# Number of species
+N <- nrow(phwhall.2008.ordered$y)
+# Initiate all lambda initial values to 0. 
+lambda.inits <- matrix(0, N, n.factors)
+# Set diagonal elements to 1
+diag(lambda.inits) <- 1
+# Set lower triangular elements to random values from a standard normal dist
+lambda.inits[lower.tri(lambda.inits)] <- rnorm(sum(lower.tri(lambda.inits)))
+# Check it out
+lambda.inits
+
+inits <- list(alpha.comm = 0,
+              beta.comm = 0,
+              beta = 0,
+              alpha = 0,
+              tau.sq.beta = 1,
+              tau.sq.alpha = 1,
+              lambda = lambda.inits, 
+              phi = 3 / mean(dist.phwh),
+              z = apply(phwhall.2008.ordered$y, c(1, 2), max, na.rm = TRUE))
+batch.length <- 50
+n.batch <- 500
+n.burn <- 5000
+n.thin <- 2
+n.chains <- 3
+min.dist <- min(dist.phwh)
+max.dist <- max(dist.phwh)
+priors <- list(beta.comm.normal = list(mean = 0, var = 2.72),
+               alpha.comm.normal = list(mean = 0, var = 2.72),
+               tau.sq.beta.ig = list(a = 0.1, b = 0.1),
+               tau.sq.alpha.ig = list(a = 0.1, b = 0.1), 
+               phi.unif = list(3 / max.dist, 3 / min.dist))
+tuning <- list(phi = 1)
+n.omp.threads <- 1
+verbose <- TRUE
+n.report <- 50 # Report progress at every 50th batch.
+
+phwhall_occobject_2008_allsigcor.occ.formula <- ~scale(substrate_metric_total) +
+  scale(pool_metric_total)
+phwhall_occobject_2008_dayyearseason.det.formula <- ~scale(dayyear)
+out.sfMsPGOcc.2008 <- sfMsPGOcc(occ.formula = phwhall_occobject_2008_allsigcor.occ.formula, det.formula = phwhall_occobject_2008_dayyearseason.det.formula, 
+                           data = phwhall.2008.ordered, 
+                           inits = inits, 
+                           n.batch = n.batch, 
+                           batch.length = batch.length, 
+                           accept.rate = 0.43, 
+                           priors = priors, 
+                           n.factors = n.factors,
+                           cov.model = cov.model, 
+                           tuning = tuning, 
+                           n.omp.threads = n.omp.threads, 
+                           verbose = TRUE, 
+                           NNGP = TRUE, 
+                           n.neighbors = 5, 
+                           n.report = n.report, 
+                           n.burn = n.burn, 
+                           n.thin = n.thin, 
+                           n.chains = n.chains)
+summary(out.sfMsPGOcc.2008)
+plot(out.sfMsPGOcc.2008$beta.comm.samples, density = FALSE)
+summary(out.sfMsPGOcc.2008$lambda.samples)
+
+ppc.out.2008 <- ppcOcc(out.sfMsPGOcc.2008, fit.stat = 'freeman-tukey', group = 1)
+summary(ppc.out.2008)
+
+```
+
+# improved detection model - for 2008 alone
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+phwhall_occobject_allsigcor.occ.formula <- ~scale(pool_depth_.cm.) + scale(per_sand) + scale(per_cobble) + scale(substrate_metric_total) +
+  scale(pool_metric_total)
+phwhall_occobject_dayyear.det.formula <- ~scale(dayyear)
+
+# Number of species
+N <- dim(phwhall.2008.ordered$y)[1]
+# Distances between sites
+dist.phwh <- dist(phwhall.2008.ordered$coords)
+# Exponential covariance model
+cov.model <- "exponential"
+ms.inits <- list(alpha.comm = 0, 
+                 beta.comm = 0, 
+                 beta = 0, 
+                 alpha = 0,
+                 tau.sq.beta = 1, 
+                 tau.sq.alpha = 1, 
+                 z = apply(phwhall.2008.ordered$y, c(1, 2), max, na.rm = TRUE))
+ms.priors <- list(beta.comm.normal = list(mean = 0, var = 2.72),
+                  alpha.comm.normal = list(mean = 0, var = 2.72), 
+                  tau.sq.beta.ig = list(a = 0.1, b = 0.1), 
+                  tau.sq.alpha.ig = list(a = 0.1, b = 0.1))
+
+
+out.alltax.allsigcor.impdet.ms.2008 <- msPGOcc(occ.formula = phwhall_occobject_allsigcor.occ.formula, 
+                                    det.formula = phwhall_occobject_dayyear.det.formula, 
+                                    data = phwhall.2008.ordered, 
+                                    inits = ms.inits, 
+                                    n.samples = 30000, 
+                                    priors = ms.priors, 
+                                    n.omp.threads = 4, 
+                                    verbose = TRUE, 
+                                    n.report = 10000, 
+                                    n.burn = 5000,
+                                    n.thin = 50, 
+                                    n.chains = 3)
+summary(out.alltax.allsigcor.impdet.ms.2008, level = 'both')
+ppc.alltax.allsigcor.impdet.ms.2008.out <- ppcOcc(out.alltax.allsigcor.impdet.ms.2008, 'chi-squared', group = 1)
+summary(ppc.alltax.allsigcor.impdet.ms.2008.out, level = 'both')
+
+waicOcc(out.alltax.allsigcor.impdet.ms.2008)
+
+write_rds(out.alltax.allsigcor.impdet.ms,"alltaxmodel_phwh.rds")
+
+```
+
+# occupancy model for 0710 alone
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+
+phwhall_occobject_0710_2<-phwhall_occobject_0710
+
+phwhall_occobject_0710_2$y<-phwhall_occobject_0710$y[(apply(phwhall_occobject_0710$y, 1, mean, na.rm = TRUE) > 0),,]
+dim(phwhall_occobject_0710_2$y)
+
+
+sppnames_0710_2<-rownames(phwhall_occobject_0710_2$y)
+
+sort(apply(phwhall_occobject_0710_2$y, 1, mean, na.rm = TRUE))
+
+# louvain's cluster identified 3 clusters - one of (perhaps) more rocky stream communities, one with most fish that are indicators of # stream health, and another of more spring-associated communities. 
+
+#Place a common species first. The first species has all of its factor loadings set to fixed values, and so it can have a large #influence on the resulting interpretation on the factor loadings and latent factors. We have also found that having a very rare #species first can result in very slow mixing and increased sensitivity to initial values of the latent factor loadings matrix.
+#For the remaining q−1 factors, place species that you believe will show different occurrence patterns than the first species, and #the other species placed before it. Place these remaining q−1 species in order of decreasing differences from the initial factor.
+
+#For example, if I had q=3, for the second species in the array, I would place a species that I a priori think is most different from #the first species. For the third species in the array, I would place a species that I think will show different occurrence patterns #than both the first and second species, but its patterns may not be as noticeably different compared to the first and second species.
+
+
+# Reorder species. 
+sp.0710.ordered <- c("midges","streambiotic_suff_mole","johnny_darter",sppnames_0710_2[!(sppnames_0710_2 %in% c("midges","streambiotic_suff_mole","johnny_darter"))])
+
+# Create new detection-nondetection data matrix in the new order
+y.0710.new <- phwhall_occobject_0710_2$y[sp.0710.ordered, , ]
+# Create a new data array
+phwhall.0710.ordered <- phwhall_occobject_0710_2
+# Change the data to the new ordered data
+phwhall.0710.ordered$y <- y.0710.new
+str(phwhall.0710.ordered)
+
+phwhall_occobject_allsigcor.occ.formula <- ~scale(pool_depth_.cm.) + scale(per_sand) + scale(per_cobble) + scale(substrate_metric_total) +
+  scale(pool_metric_total)
+phwhall_occobject_dayyear.det.formula <- ~scale(dayyear)
+
+# Number of species
+N <- dim(phwhall.0710.ordered$y)[1]
+# Distances between sites
+dist.phwh <- dist(phwhall.0710.ordered$coords)
+# Exponential covariance model
+cov.model <- "exponential"
+ms.inits <- list(alpha.comm = 0, 
+                 beta.comm = 0, 
+                 beta = 0, 
+                 alpha = 0,
+                 tau.sq.beta = 1, 
+                 tau.sq.alpha = 1, 
+                 z = apply(phwhall.0710.ordered$y, c(1, 2), max, na.rm = TRUE))
+ms.priors <- list(beta.comm.normal = list(mean = 0, var = 2.72),
+                  alpha.comm.normal = list(mean = 0, var = 2.72), 
+                  tau.sq.beta.ig = list(a = 0.1, b = 0.1), 
+                  tau.sq.alpha.ig = list(a = 0.1, b = 0.1))
+
+
+out.alltax.allsigcor.impdet.ms.0710 <- msPGOcc(occ.formula = phwhall_occobject_allsigcor.occ.formula, 
+                                    det.formula = phwhall_occobject_dayyear.det.formula, 
+                                    data = phwhall.0710.ordered, 
+                                    inits = ms.inits, 
+                                    n.samples = 30000, 
+                                    priors = ms.priors, 
+                                    n.omp.threads = 4, 
+                                    verbose = TRUE, 
+                                    n.report = 10000, 
+                                    n.burn = 5000,
+                                    n.thin = 50, 
+                                    n.chains = 3)
+summary(out.alltax.allsigcor.impdet.ms.0710, level = 'both')
+ppc.alltax.allsigcor.impdet.ms.0710.out <- ppcOcc(out.alltax.allsigcor.impdet.ms.0710, 'chi-squared', group = 1)
+summary(ppc.alltax.allsigcor.impdet.ms.0710.out, level = 'both')
+
+waicOcc(out.alltax.allsigcor.impdet.ms.0710)
+
+write_rds(out.alltax.allsigcor.impdet.ms.0710,"alltaxmodel_phwh_0710.rds")
+
+```
+
+## prediction across census streams - taxa richness?
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+
+rich.pred<-apply(out.alltax.allsigcor.impdet.ms.0710$z.samples, c(1,3), sum)
+
+
+ plot.dat.rich <- data.frame(x = pcap_full_land$xcoord, 
+                            y = pcap_full_land$ycoord, 
+                            mean.rich = apply(rich.pred, 2, mean),
+                            sd.rich = apply(rich.pred, 2, sd),
+                            mean.rich.R = apply(rich.pred.R,2,mean),
+                            sd.rich.R = apply(rich.pred.R,2,sd),
+                            mean.rich.S = apply(rich.pred.S,2,mean),
+                            sd.rich.S = apply(rich.pred.S,2,sd),
+                            mean.rich.T = apply(rich.pred.T,2,mean),
+                            sd.rich.T = apply(rich.pred.T,2,sd),
+                            stringsAsFactors = FALSE)
+ 
+ write.csv(plot.dat.rich,"plotdatarichness.csv")
+  
+  dsp <- SpatialPoints(plot.dat.rich[,1:2])
+  dsp <- SpatialPointsDataFrame(dsp, plot.dat.rich)
+  crs(dsp)<-"+proj=lcc +lat_0=39.6666666666667 +lon_0=-82.5 +lat_1=41.7 +lat_2=40.4333333333333 +x_0=600000 +y_0=0 +datum=NAD83 +units=us-ft +no_defs"
+  j <- sample(nrow(dsp), 0.2 * nrow(dsp))
+  tst <- dsp[j,]
+  trn <- dsp[-j,]
+RMSE <- function(observed, predicted) {
+  sqrt(mean((predicted - observed)^2, na.rm=TRUE))
+}
+f1 <- function(x, test, train) {
+  nmx <- x[1]
+  idp <- x[2]
+  if (nmx < 1) return(Inf)
+  if (idp < .001) return(Inf)
+  m <- gstat(formula=mean.rich.S~1, locations=train, nmax=nmx, set=list(idp=idp))
+  p <- predict(m, newdata=test, debug.level=0)$var1.pred
+  RMSE(test$mean.rich.S, p)
+}
+p <- data.frame(geom(dsp)[, c("x", "y")], as.data.frame(dsp))
+r <- raster(respoly, res=100)
+opt <- optim(c(8, 0.5), f1, test=tst, train=trn)
+m <- gstat(formula=mean.rich.S~1, locations=~x+y, data=p, nmax=opt$par[1], set=list(idp=opt$par[2]))
+idw <- interpolate(r, m, debug.level=0)
+
+
+idw <- mask(idw, respoly)
+plot(idw, 1)
+```
+
+## occupancy predictions
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+respoly<-readOGR("G:/NaturalResources/Byer/DataAnalysis/bbs_cmp_analyses/bbsapp/CMPboundaries.shp")
+
+RMSE <- function(observed, predicted) {
+  sqrt(mean((predicted - observed)^2, na.rm=TRUE))
+}
+f1 <- function(x, test, train) {
+  nmx <- x[1]
+  idp <- x[2]
+  if (nmx < 1) return(Inf)
+  if (idp < .001) return(Inf)
+  m <- gstat(formula=mean.psi~1, locations=train, nmax=nmx, set=list(idp=idp))
+  p <- predict(m, newdata=test, debug.level=0)$var1.pred
+  RMSE(test$mean.psi, p)
+}
+
+idwrasters_occupancy_census<-list()
+
+sppnames<-rownames(phwhall.0710.ordered$y)
+saveRDS(sppnames,"sppnames_census.RData")
+for(i in 1:length(sppnames)){
+  plot.dat.ms <- data.frame(x = phwhall.0710.ordered$coords[,1], 
+                            y = phwhall.0710.ordered$coords[,2], 
+                            mean.psi = apply(out.alltax.allsigcor.impdet.ms.0710$psi.samples[,i,], 2, mean))
+  
+  dsp <- SpatialPoints(plot.dat.ms[,1:2])
+  dsp <- SpatialPointsDataFrame(dsp, plot.dat.ms)
+  crs(dsp)<-CRS("+init=epsg:3734")
+  j <- sample(nrow(dsp), 0.2 * nrow(dsp))
+  tst <- dsp[j,]
+  trn <- dsp[-j,]
+opt <- optim(c(8, .5), f1, test=tst, train=trn)
+  # define groups for mapping
+  cuts <- c(0,0.25,0.75,1.0)
+  # set up a palette of interpolated colors
+  blues <- colorRampPalette(c('yellow', 'orange', 'blue', 'dark blue'))
+  spplot(dsp, 'mean.psi', cuts=cuts, col.regions=blues(5), pch=20, cex=2)
+  v <- voronoi(dsp)
+   
+  ch <- chull(plot.dat.ms[,1:2])
+  coords <- plot.dat.ms[c(ch, ch[1]), 1:2]  # closed polygon
+  
+  plot(plot.dat.ms[,1:2], pch=19)
+  lines(coords, col="red")
+  
+  r <- raster(respoly, res=500)
+  
+  fitmax <- gstat::gstat(formula = mean.psi ~ 1, data = dsp, nmax = opt$par[1], set = list(idp = opt$par[2]))
+  maxint <- raster::interpolate(r, model=fitmax)
+  crs(maxint)<-"+proj=lcc +lat_0=39.6666666666667 +lon_0=-82.5 +lat_1=41.7 +lat_2=40.4333333333333 +x_0=600000 +y_0=0 +datum=NAD83 +units=us-ft +no_defs"
+  plot(maxint, col=rev(heat.colors(255)))
+  plot(vr, add=TRUE)
+  r2 <- crop(maxint, extent(respoly))
+  r3 <- mask(r2, respoly)
+  plot(r3)
+  idwrasters_occupancy_census[[i]]<-r3
+  writeRaster(r3,filename = paste0("G:/NaturalResources/Byer/DataAnalysis/PHWH/rasterpredictions/02082023_predictions/census/",sppnames[i],"_census_meanpsi_02082023.asc"),overwrite=TRUE)
+  
+}
+
+saveRDS(idwrasters_occupancy_census,"idwrasters_occupancy_census.rData")
+
+options(max.print=1000000)
+sink("out.alltax.allsigcor.impdet.ms.0710.txt")
+print(summary(out.alltax.allsigcor.impdet.ms.0710,level="species",quantiles=c(0.05,0.5,0.95)))
+sink() 
+
+```
+
+
+# occupancy model for 1316 alone
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+
+phwhall_occobject_1316_2<-phwhall_occobject_1316
+
+phwhall_occobject_1316_2$y<-phwhall_occobject_1316$y[(apply(phwhall_occobject_1316$y, 1, mean, na.rm = TRUE) > 0),,]
+dim(phwhall_occobject_1316_2$y)
+
+
+sppnames_1316_2<-rownames(phwhall_occobject_1316_2$y)
+
+sort(apply(phwhall_occobject_1316_2$y, 1, mean, na.rm = TRUE))
+
+# louvain's cluster identified 3 clusters - one of (perhaps) more rocky stream communities, one with most fish that are indicators of # stream health, and another of more spring-associated communities. 
+
+#Place a common species first. The first species has all of its factor loadings set to fixed values, and so it can have a large #influence on the resulting interpretation on the factor loadings and latent factors. We have also found that having a very rare #species first can result in very slow mixing and increased sensitivity to initial values of the latent factor loadings matrix.
+#For the remaining q−1 factors, place species that you believe will show different occurrence patterns than the first species, and #the other species placed before it. Place these remaining q−1 species in order of decreasing differences from the initial factor.
+
+#For example, if I had q=3, for the second species in the array, I would place a species that I a priori think is most different from #the first species. For the third species in the array, I would place a species that I think will show different occurrence patterns #than both the first and second species, but its patterns may not be as noticeably different compared to the first and second species.
+
+
+# Reorder species. 
+sp.1316.ordered <- c("other_flies","central_stoneroller_minnow","johnny_darter",sppnames_1316_2[!(sppnames_1316_2 %in% c("other_flies","central_stoneroller_minnow","johnny_darter"))])
+
+# Create new detection-nondetection data matrix in the new order
+y.1316.new <- phwhall_occobject_1316_2$y[sp.1316.ordered, , ]
+# Create a new data array
+phwhall.1316.ordered <- phwhall_occobject_1316_2
+# Change the data to the new ordered data
+phwhall.1316.ordered$y <- y.1316.new
+str(phwhall.1316.ordered)
+
+phwhall_occobject_allsigcor.occ.formula <- ~scale(pool_depth_.cm.) + scale(per_sand) + scale(per_cobble) + scale(substrate_metric_total) +
+  scale(pool_metric_total)
+phwhall_occobject_dayyear.det.formula <- ~scale(dayyear)
+
+# Number of species
+N <- dim(phwhall.1316.ordered$y)[1]
+# Distances between sites
+dist.phwh <- dist(phwhall.1316.ordered$coords)
+# Exponential covariance model
+cov.model <- "exponential"
+ms.inits <- list(alpha.comm = 0, 
+                 beta.comm = 0, 
+                 beta = 0, 
+                 alpha = 0,
+                 tau.sq.beta = 1, 
+                 tau.sq.alpha = 1, 
+                 z = apply(phwhall.1316.ordered$y, c(1, 2), max, na.rm = TRUE))
+ms.priors <- list(beta.comm.normal = list(mean = 0, var = 2.72),
+                  alpha.comm.normal = list(mean = 0, var = 2.72), 
+                  tau.sq.beta.ig = list(a = 0.1, b = 0.1), 
+                  tau.sq.alpha.ig = list(a = 0.1, b = 0.1))
+
+
+out.alltax.allsigcor.impdet.ms.1316 <- msPGOcc(occ.formula = phwhall_occobject_allsigcor.occ.formula, 
+                                    det.formula = phwhall_occobject_dayyear.det.formula, 
+                                    data = phwhall.1316.ordered, 
+                                    inits = ms.inits, 
+                                    n.samples = 30000, 
+                                    priors = ms.priors, 
+                                    n.omp.threads = 4, 
+                                    verbose = TRUE, 
+                                    n.report = 10000, 
+                                    n.burn = 5000,
+                                    n.thin = 50, 
+                                    n.chains = 3)
+summary(out.alltax.allsigcor.impdet.ms.1316, level = 'both')
+ppc.alltax.allsigcor.impdet.ms.1316.out <- ppcOcc(out.alltax.allsigcor.impdet.ms.1316, 'chi-squared', group = 1)
+summary(ppc.alltax.allsigcor.impdet.ms.1316.out, level = 'both')
+
+waicOcc(out.alltax.allsigcor.impdet.ms.1316)
+
+write_rds(out.alltax.allsigcor.impdet.ms.1316,"alltaxmodel_phwh_1316.rds")
+
+```
+
+## occupancy predictions
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+respoly<-readOGR("G:/NaturalResources/Byer/DataAnalysis/bbs_cmp_analyses/bbsapp/CMPboundaries.shp")
+
+RMSE <- function(observed, predicted) {
+  sqrt(mean((predicted - observed)^2, na.rm=TRUE))
+}
+f1 <- function(x, test, train) {
+  nmx <- x[1]
+  idp <- x[2]
+  if (nmx < 1) return(Inf)
+  if (idp < .001) return(Inf)
+  m <- gstat(formula=mean.psi~1, locations=train, nmax=nmx, set=list(idp=idp))
+  p <- predict(m, newdata=test, debug.level=0)$var1.pred
+  RMSE(test$mean.psi, p)
+}
+
+idwrasters_occupancy_first<-list()
+
+sppnames<-rownames(phwhall.1316.ordered$y)
+saveRDS(sppnames,"sppnames_first.RData")
+
+for(i in 1:length(sppnames)){
+  plot.dat.ms <- data.frame(x = phwhall.1316.ordered$coords[,1], 
+                            y = phwhall.1316.ordered$coords[,2], 
+                            mean.psi = apply(out.alltax.allsigcor.impdet.ms.1316$psi.samples[,i,], 2, mean))
+  
+  dsp <- SpatialPoints(plot.dat.ms[,1:2])
+  dsp <- SpatialPointsDataFrame(dsp, plot.dat.ms)
+  crs(dsp)<-CRS("+init=epsg:3734")
+  j <- sample(nrow(dsp), 0.2 * nrow(dsp))
+  tst <- dsp[j,]
+  trn <- dsp[-j,]
+opt <- optim(c(8, .5), f1, test=tst, train=trn)
+  # define groups for mapping
+  cuts <- c(0,0.25,0.75,1.0)
+  # set up a palette of interpolated colors
+  blues <- colorRampPalette(c('yellow', 'orange', 'blue', 'dark blue'))
+  spplot(dsp, 'mean.psi', cuts=cuts, col.regions=blues(5), pch=20, cex=2)
+  v <- voronoi(dsp)
+   
+  ch <- chull(plot.dat.ms[,1:2])
+  coords <- plot.dat.ms[c(ch, ch[1]), 1:2]  # closed polygon
+  
+  plot(plot.dat.ms[,1:2], pch=19)
+  lines(coords, col="red")
+  
+  r <- raster(respoly, res=500)
+  
+  fitmax <- gstat::gstat(formula = mean.psi ~ 1, data = dsp, nmax = opt$par[1], set = list(idp = opt$par[2]))
+  maxint <- raster::interpolate(r, model=fitmax)
+  crs(maxint)<-"+proj=lcc +lat_0=39.6666666666667 +lon_0=-82.5 +lat_1=41.7 +lat_2=40.4333333333333 +x_0=600000 +y_0=0 +datum=NAD83 +units=us-ft +no_defs"
+  plot(maxint, col=rev(heat.colors(255)))
+  plot(vr, add=TRUE)
+  r2 <- crop(maxint, extent(respoly))
+  r3 <- mask(r2, respoly)
+  plot(r3)
+  idwrasters_occupancy_first[[i]]<-r3
+  writeRaster(r3,filename = paste0("G:/NaturalResources/Byer/DataAnalysis/PHWH/rasterpredictions/02082023_predictions/first/",sppnames[i],"_first_meanpsi_02082023.asc"),overwrite=TRUE)
+  
+}
+
+saveRDS(idwrasters_occupancy_first,"idwrasters_occupancy_first.RData")
+
+options(max.print=1000000)
+sink("out.alltax.allsigcor.impdet.ms.1316.txt")
+print(summary(out.alltax.allsigcor.impdet.ms.1316,level="species",quantiles=c(0.05,0.5,0.95)))
+sink() 
+
+```
+
+
+# occupancy model for 1821 alone
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+
+phwhall_occobject_1821_2<-phwhall_occobject_1821
+
+phwhall_occobject_1821_2$y<-phwhall_occobject_1821$y[(apply(phwhall_occobject_1821$y, 1, mean, na.rm = TRUE) > 0),,]
+dim(phwhall_occobject_1821_2$y)
+
+
+sppnames_1821_2<-rownames(phwhall_occobject_1821_2$y)
+
+sort(apply(phwhall_occobject_1821_2$y, 1, mean, na.rm = TRUE))
+
+# louvain's cluster identified 3 clusters - one of (perhaps) more rocky stream communities, one with most fish that are indicators of # stream health, and another of more spring-associated communities. 
+
+#Place a common species first. The first species has all of its factor loadings set to fixed values, and so it can have a large #influence on the resulting interpretation on the factor loadings and latent factors. We have also found that having a very rare #species first can result in very slow mixing and increased sensitivity to initial values of the latent factor loadings matrix.
+#For the remaining q−1 factors, place species that you believe will show different occurrence patterns than the first species, and #the other species placed before it. Place these remaining q−1 species in order of decreasing differences from the initial factor.
+
+#For example, if I had q=3, for the second species in the array, I would place a species that I a priori think is most different from #the first species. For the third species in the array, I would place a species that I think will show different occurrence patterns #than both the first and second species, but its patterns may not be as noticeably different compared to the first and second species.
+
+
+# Reorder species. 
+sp.1821.ordered <- c("midges","streambiotic_suff_mole",sppnames_1821_2[!(sppnames_1821_2 %in% c("midges","streambiotic_suff_mole"))])
+
+# Create new detection-nondetection data matrix in the new order
+y.1821.new <- phwhall_occobject_1821_2$y[sp.1821.ordered, , ]
+# Create a new data array
+phwhall.1821.ordered <- phwhall_occobject_1821_2
+# Change the data to the new ordered data
+phwhall.1821.ordered$y <- y.1821.new
+str(phwhall.1821.ordered)
+
+phwhall_occobject_allsigcor.occ.formula <- ~scale(pool_depth_.cm.) + scale(per_sand) + scale(per_cobble) + scale(substrate_metric_total) +
+  scale(pool_metric_total)
+phwhall_occobject_dayyear.det.formula <- ~scale(dayyear)
+
+# Number of species
+N <- dim(phwhall.1821.ordered$y)[1]
+# Distances between sites
+dist.phwh <- dist(phwhall.1821.ordered$coords)
+# Exponential covariance model
+cov.model <- "exponential"
+ms.inits <- list(alpha.comm = 0, 
+                 beta.comm = 0, 
+                 beta = 0, 
+                 alpha = 0,
+                 tau.sq.beta = 1, 
+                 tau.sq.alpha = 1, 
+                 z = apply(phwhall.1821.ordered$y, c(1, 2), max, na.rm = TRUE))
+ms.priors <- list(beta.comm.normal = list(mean = 0, var = 2.72),
+                  alpha.comm.normal = list(mean = 0, var = 2.72), 
+                  tau.sq.beta.ig = list(a = 0.1, b = 0.1), 
+                  tau.sq.alpha.ig = list(a = 0.1, b = 0.1))
+
+
+out.alltax.allsigcor.impdet.ms.1821 <- msPGOcc(occ.formula = phwhall_occobject_allsigcor.occ.formula, 
+                                    det.formula = phwhall_occobject_dayyear.det.formula, 
+                                    data = phwhall.1821.ordered, 
+                                    inits = ms.inits, 
+                                    n.samples = 30000, 
+                                    priors = ms.priors, 
+                                    n.omp.threads = 4, 
+                                    verbose = TRUE, 
+                                    n.report = 10000, 
+                                    n.burn = 5000,
+                                    n.thin = 50, 
+                                    n.chains = 3)
+summary(out.alltax.allsigcor.impdet.ms.1821, level = 'both')
+ppc.alltax.allsigcor.impdet.ms.1821.out <- ppcOcc(out.alltax.allsigcor.impdet.ms.1821, 'chi-squared', group = 1)
+summary(ppc.alltax.allsigcor.impdet.ms.1821.out, level = 'both')
+
+waicOcc(out.alltax.allsigcor.impdet.ms.1821)
+
+write_rds(out.alltax.allsigcor.impdet.ms.1821,"alltaxmodel_phwh_1821.rds")
+
+```
+
+## occupancy predictions
+
+```{r, eval = FALSE, warning = FALSE, message= FALSE}
+respoly<-readOGR("G:/NaturalResources/Byer/DataAnalysis/bbs_cmp_analyses/bbsapp/CMPboundaries.shp")
+
+RMSE <- function(observed, predicted) {
+  sqrt(mean((predicted - observed)^2, na.rm=TRUE))
+}
+f1 <- function(x, test, train) {
+  nmx <- x[1]
+  idp <- x[2]
+  if (nmx < 1) return(Inf)
+  if (idp < .001) return(Inf)
+  m <- gstat(formula=mean.psi~1, locations=train, nmax=nmx, set=list(idp=idp))
+  p <- predict(m, newdata=test, debug.level=0)$var1.pred
+  RMSE(test$mean.psi, p)
+}
+
+idwrasters_occupancy_second<-list()
+
+sppnames<-rownames(phwhall.1821.ordered$y)
+saveRDS(sppnames,"sppnames_second.RData")
+
+for(i in 1:length(sppnames)){
+  plot.dat.ms <- data.frame(x = phwhall.1821.ordered$coords[,1], 
+                            y = phwhall.1821.ordered$coords[,2], 
+                            mean.psi = apply(out.alltax.allsigcor.impdet.ms.1821$psi.samples[,i,], 2, mean))
+  
+  dsp <- SpatialPoints(plot.dat.ms[,1:2])
+  dsp <- SpatialPointsDataFrame(dsp, plot.dat.ms)
+  crs(dsp)<-CRS("+init=epsg:3734")
+  j <- sample(nrow(dsp), 0.2 * nrow(dsp))
+  tst <- dsp[j,]
+  trn <- dsp[-j,]
+opt <- optim(c(8, .5), f1, test=tst, train=trn)
+  # define groups for mapping
+  cuts <- c(0,0.25,0.75,1.0)
+  # set up a palette of interpolated colors
+  blues <- colorRampPalette(c('yellow', 'orange', 'blue', 'dark blue'))
+  spplot(dsp, 'mean.psi', cuts=cuts, col.regions=blues(5), pch=20, cex=2)
+  v <- voronoi(dsp)
+   
+  ch <- chull(plot.dat.ms[,1:2])
+  coords <- plot.dat.ms[c(ch, ch[1]), 1:2]  # closed polygon
+  
+  plot(plot.dat.ms[,1:2], pch=19)
+  lines(coords, col="red")
+  
+  r <- raster(respoly, res=500)
+  
+  fitmax <- gstat::gstat(formula = mean.psi ~ 1, data = dsp, nmax = opt$par[1], set = list(idp = opt$par[2]))
+  maxint <- raster::interpolate(r, model=fitmax)
+  crs(maxint)<-"+proj=lcc +lat_0=39.6666666666667 +lon_0=-82.5 +lat_1=41.7 +lat_2=40.4333333333333 +x_0=600000 +y_0=0 +datum=NAD83 +units=us-ft +no_defs"
+  plot(maxint, col=rev(heat.colors(255)))
+  plot(vr, add=TRUE)
+  r2 <- crop(maxint, extent(respoly))
+  r3 <- mask(r2, respoly)
+  plot(r3)
+  idwrasters_occupancy_second[[i]]<-r3
+  writeRaster(r3,filename = paste0("G:/NaturalResources/Byer/DataAnalysis/PHWH/rasterpredictions/02082023_predictions/second/",sppnames[i],"_second_meanpsi_02082023.asc"),overwrite=TRUE)
+  
+}
+
+saveRDS(idwrasters_occupancy_second,"idwrasters_occupancy_second.RData")
+
+options(max.print=1000000)
+sink("out.alltax.allsigcor.impdet.ms.1821.txt")
+print(summary(out.alltax.allsigcor.impdet.ms.1821,level="species",quantiles=c(0.05,0.5,0.95)))
+sink() 
+
+
 ```
